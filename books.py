@@ -34,8 +34,8 @@ def getBooks(row, user_agent_dict):
 	tree.raise_for_status()
 	soup = BeautifulSoup(tree.content, 'html.parser')
 
-	links = soup.findAll('a', attrs={'href': re.compile("/content/")})
-	href = links[0].get('href')
+	pdf_links = soup.findAll('a', attrs={'href': re.compile("/content/")})
+	pdf_href = pdf_links[0].get('href')
 
 	title = row['Book Title']
 	author = [x.strip() for x in row['Author'].split(',')]
@@ -47,7 +47,15 @@ def getBooks(row, user_agent_dict):
 	else:
 		author = author[0]
 
-	saveBook(href, author, title)
+	saveBook(pdf_href, author, title)
+
+	# Attempt to fetch epub in addition
+	try:
+		epub_links = soup.findAll('a', attrs={'href': re.compile("/download/")})
+		epub_href = epub_links[0].get('href')
+		saveBook(epub_href, author, title)
+	except IndexError:
+		pass
 
 
 if __name__ == "__main__":
