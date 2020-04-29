@@ -11,6 +11,21 @@ def loadUserAgents(file='user_agents.txt'):
 	data = [{"User-Agent":x[0:-1]} for x in data] #remove \n from string
 	return data
 
+def saveBook(href, author, title, dir=Path.cwd()):
+	extension = href.split(".")[-1]
+	file_name = fr'{author} - {title}.{extension}'
+	file_name = file_name.replace('/', '-').replace(':', '-').replace(',', '-')
+	save_path = dir / file_name
+	download_url = fr'https://link.springer.com{href}'
+
+	print(fr'{download_url} --> {save_path}')
+
+	response = requests.get(download_url)
+	expdf = response.content
+	egpdf = save_path.open("wb")
+	egpdf.write(expdf)
+	egpdf.close()
+
 def getBooks(row, user_agent_dict):
 	#/content/pdf/10.1007%2F0-306-48048-4_16.pdf
 	# https://link.springer.com/
@@ -20,9 +35,7 @@ def getBooks(row, user_agent_dict):
 	soup = BeautifulSoup(tree.content, 'html.parser')
 
 	links = soup.findAll('a', attrs={'href': re.compile("/content/")})
-	download_url = links[0].get('href')
-	download_url = fr'https://link.springer.com{download_url}'
-	print(download_url)
+	href = links[0].get('href')
 
 	title = row['Book Title']
 	author = [x.strip() for x in row['Author'].split(',')]
@@ -34,14 +47,7 @@ def getBooks(row, user_agent_dict):
 	else:
 		author = author[0]
 
-	file_name = Path(f'{title} - {author}.pdf'.replace('/','-').replace(':','-').replace(',', '-'))
-	print(file_name)
-
-	response = requests.get(download_url)
-	expdf=response.content
-	egpdf=open(file_name,'wb')
-	egpdf.write(expdf)
-	egpdf.close()
+	saveBook(href, author, title)
 
 
 if __name__ == "__main__":
